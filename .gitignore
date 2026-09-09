@@ -1,0 +1,45 @@
+# ==========================================
+# Git Ignore for Stable Diffusion Local
+# ==========================================
+
+# Virtual Environments (do not commit packages)
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Generated Images and Outputs (do not commit outputs)
+outputs/
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Heavy Model Checkpoints and Large Weights
+models/*.safetensors
+models/*.ckpt
+models/*.bin
+models/*.pt
+models/*.pth
+models/*.onnx
+
+# Python bytecode & Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.cache/
+.pytest_cache/
+.huggingface/
+
+# Runtime Logs
+*.log
+server.log
+nohup.out
+
+# IDE & OS Metadata
+.DS_Store
+.directory
+.vscode/
+.idea/

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stable Diffusion Local • SD 1.5 + SDXL</title>
+  <meta name="description" content="Local Stable Diffusion — Realistic Vision v5.1 & RealVisXL v4.0. Text-to-image and image-to-image with face preserve mode.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="top-header">
+      <div class="brand">
+        <div class="logo-icon">⚡</div>
+        <div class="brand-text">
+          <h1>Stable Diffusion Local</h1>
+          <span class="model-badge">Offline • RTX 3090 • SD 1.5 & SDXL</span>
+        </div>
+      </div>
+      <div class="system-status">
+        <div class="status-pill offline-pill">
+          <span class="dot green"></span>
+          <span>100% Offline</span>
+        </div>
+        <div class="status-pill gpu-pill">
+          <span class="dot blue"></span>
+          <span id="gpuName">NVIDIA RTX 3090 (24GB)</span>
+        </div>
+        <div class="status-pill vram-pill">
+          <span id="vramFreeText">VRAM: —</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+      <!-- Left Panel: Controls -->
+      <section class="controls-panel">
+        <div class="panel-header">
+          <h2>Generation Parameters</h2>
+          <span class="mode-badge" id="modeBadge">Mode: Text-to-Image</span>
+        </div>
+
+        <!-- ══ MODEL SELECTOR ══ -->
+        <div class="model-selector-group">
+          <label class="section-label">🤖 AI Model</label>
+          <div class="model-pills">
+            <button type="button" class="model-pill active" id="btnModelSd15">
+              <div class="pill-top">
+                <span class="pill-title">Realistic Vision v5.1</span>
+                <span class="pill-badge sd15-badge">SD 1.5</span>
+              </div>
+              <span class="pill-sub">Fast (~3s) • 512p • Great faces</span>
+              <span class="pill-status" id="sd15Status">● Loaded</span>
+            </button>
+            <button type="button" class="model-pill" id="btnModelSdxl">
+              <div class="pill-top">
+                <span class="pill-title">RealVisXL v4.0 ✨</span>
+                <span class="pill-badge sdxl-badge">SDXL</span>
+              </div>
+              <span class="pill-sub">1024p • Dual CLIP • Highest accuracy</span>
+              <span class="pill-status" id="sdxlStatus">⏳ Loading…</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ PROMPT ══ -->
+        <div class="input-group">
+          <label for="prompt">✏️ Prompt</label>
+          <textarea id="prompt" rows="3" placeholder="e.g., an wearing a red  on the beawomch, photorealistic, 8k, cinematic light"></textarea>
+        </div>
+
+        <div class="input-group">
+          <label for="negPrompt">🚫 Negative Prompt <span class="label-hint">(leave blank for auto face-quality)</span></label>
+          <textarea id="negPrompt" rows="2" placeholder="Leave empty for best face/body quality (auto-fills)"></textarea>
+        </div>
+
+        <!-- ══ REFERENCE IMAGE (img2img) ══ -->
+        <div class="ref-image-card">
+          <div class="ref-header">
+            <div>
+              <div class="ref-title">🖼️ Reference Image (Image-to-Image)</div>
+              <div class="ref-desc">Upload a photo — model edits it following your prompt</div>
+            </div>
+            <button class="btn-text btn-danger" id="btnClearRef" style="display: none;">✕ Remove</button>
+          </div>
+
+          <div class="ref-dropzone" id="refDropzone">
+            <input type="file" id="refFileInput" accept="image/*" style="display: none;">
+            <div class="dropzone-content" id="dropzoneContent">
+              <span class="dropzone-icon">📷</span>
+              <span>Click or drag &amp; drop your photo here</span>
+              <span class="dropzone-hint">Faces &amp; body shapes are preserved by the model</span>
+            </div>
+            <img id="refPreviewThumb" src="" alt="Reference Preview" style="display: none;">
+          </div>
+
+          <!-- Denoising Strength -->
+          <div class="strength-group" id="strengthGroup" style="display: none;">
+            <div class="label-val">
+              <label for="strength">Edit Strength (Denoising)</label>
+              <span id="strengthVal">0.50</span>
+            </div>
+            <input type="range" id="strength" min="0.15" max="0.95" step="0.05" value="0.50">
+            <div class="strength-hints">
+              <span>0.30 (Keep face exact)</span>
+              <span>0.50 (Best balance)</span>
+              <span>0.85 (Full redesign)</span>
+            </div>
+
+            <!-- Face Preserve Mode -->
+            <div class="face-preserve-row">
+              <label class="toggle-label" for="facePreserveToggle">
+                <span class="toggle-icon">👤</span>
+                <span class="toggle-text">
+                  <b>Face & Body Preserve Mode</b>
+                  <small>Keeps original face structure, skin, body shape — only changes clothes/background/style</small>
+                </span>
+                <label class="switch">
+                  <input type="checkbox" id="facePreserveToggle" checked>
+                  <span class="slider round"></span>
+                </label>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ VAE SWITCH ══ -->
+        <div class="vae-toggle-card">
+          <div class="vae-toggle-header">
+            <div>
+              <div class="vae-title">Disable VAE Decoder</div>
+              <div class="vae-desc">OFF = Full neural decoding (best for faces). ON = Direct latent (fast preview)</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="disableVaeToggle">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="vae-badge" id="vaeStateBadge">VAE: ENABLED (Full Photorealistic Details)</div>
+        </div>
+
+        <!-- ══ SLIDERS ══ -->
+        <div class="controls-grid">
+          <div class="control-item">
+            <div class="label-val">
+              <label for="steps">Sampling Steps</label>
+              <span id="stepsVal">30</span>
+            </div>
+            <input type="range" id="steps" min="10" max="60" value="30">
+            <div class="slider-hints"><span>10 (Fast)</span><span>30 (Quality)</span><span>60 (Max)</span></div>
+          </div>
+
+          <div class="control-item">
+            <div class="label-val">
+              <label for="cfg">CFG Scale</label>
+              <span id="cfgVal">7.5</span>
+            </div>
+            <input type="range" id="cfg" min="1.0" max="15.0" step="0.5" value="7.5">
+            <div class="slider-hints"><span>1 (Creative)</span><span>7.5 (Balanced)</span><span>15 (Strict)</span></div>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-item">
+            <label for="resolution">Dimensions</label>
+            <select id="resolution">
+              <option value="512x512" selected>512 × 512 (Standard)</option>
+              <option value="512x768">512 × 768 (Portrait)</option>
+              <option value="768x512">768 × 512 (Landscape)</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <div class="label-val">
+              <label for="seed">Seed</label>
+              <button class="btn-text" id="btnRandomSeed">🎲 Random</button>
+            </div>
+            <input type="number" id="seed" placeholder="-1 for random" value="-1">
+          </div>
+        </div>
+
+        <button id="btnGenerate" class="btn-generate">
+          <span class="btn-icon">✨</span>
+          <span class="btn-text-content" id="btnGenerateText">Generate Image</span>
+        </button>
+      </section>
+
+      <!-- Right Panel: Viewport & Gallery -->
+      <section class="viewport-panel">
+        <div class="preview-card" id="previewCard">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">🎨</div>
+            <h3>Ready to Generate &amp; Edit</h3>
+            <p>Enter a prompt or upload a reference photo.<br>Use <b>Face &amp; Body Preserve Mode</b> to keep real faces exact.</p>
+          </div>
+
+          <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="spinner"></div>
+            <p id="loadingStatusText">Generating with Realistic Vision v5.1…</p>
+            <span class="loading-subtext" id="loadingSubtext">Running on NVIDIA RTX 3090 (Offline)</span>
+          </div>
+
+          <div class="image-viewer" id="imageViewer" style="display: none;">
+            <img id="resultImage" src="" alt="Generated artwork">
+            <div class="image-meta-bar">
+              <div class="meta-tags">
+                <span class="tag" id="metaMode">txt2img</span>
+                <span class="tag" id="metaTime">⚡ 0.0s</span>
+                <span class="tag" id="metaSeed">Seed: —</span>
+                <span class="tag" id="metaVae">VAE: Enabled</span>
+                <span class="tag" id="metaFace" style="display:none;">👤 Face Preserve</span>
+              </div>
+              <div class="meta-actions">
+                <button id="btnUseAsRef" class="btn-action secondary">🖼️ Use as Reference</button>
+                <a id="btnDownload" download="artwork.png" class="btn-action">💾 Download</a>
+                <button id="btnDeleteImage" class="btn-action danger" title="Delete this image">🗑️ Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Gallery -->
+        <div class="gallery-section">
+          <div class="gallery-header">
+            <h3>Recent Generations</h3>
+            <span class="gallery-tip">Click to view • 🗑️ to delete</span>
+            <button id="btnRefreshGallery" class="btn-refresh">🔄</button>
+          </div>
+          <div class="gallery-strip" id="galleryStrip">
+            <span class="gallery-empty-hint">No images generated yet</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
